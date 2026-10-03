@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Recipes collection
+    match /recipes/{recipeId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        exists(/databases/$(database)/documents/recipe_permissions/$(recipeId + '_' + request.auth.uid))
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/recipe_permissions/$(recipeId + '_' + request.auth.uid)).data.accessLevel == 'editor'
+      );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Recipe Ingredients collection
+    match /recipe_ingredients/{ingredientId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Recipe Steps collection
+    match /recipe_steps/{stepId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Recipe Permissions collection
+    match /recipe_permissions/{permId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || request.auth.uid != null);
+      allow write: if isSignedIn();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "VelvetKitchen - Dark Mode Recipe Hub",
+  "description": "A modern, sleek dark-themed recipe and category management web app with user-specific isolation, ingredient tracking, and bookmarking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
